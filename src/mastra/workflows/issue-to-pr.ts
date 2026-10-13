@@ -1,15 +1,16 @@
 import { createWorkflow } from '@mastra/core/workflows'
 import { z } from 'zod'
-import { Planned, fastLane, planAndGate } from '../stages/plan'
+import { Work, implementStep } from '../stages/implement'
+import { fastLane, planAndGate } from '../stages/plan'
 import { intakeStep, triageStep } from '../stages/triage'
 
 // Printed when a run ends here, so you know which step adds the next lane.
-export const next = 'This is where step-2 ends. Step 3 adds the maintainer and verify: git switch step-3'
+export const next = 'This is where step-3 ends. Step 4 adds the draft PR: git switch step-4'
 
 export const issueToPr = createWorkflow({
   id: 'issue-to-pr',
   inputSchema: z.object({ issue: z.number() }),
-  outputSchema: Planned,
+  outputSchema: Work,
 })
   .then(intakeStep)
   .then(triageStep)
@@ -18,4 +19,5 @@ export const issueToPr = createWorkflow({
     [async ({ inputData }) => !inputData.triage.needsPlan, fastLane],
   ])
   .map(async ({ inputData }) => inputData['plan-and-gate'] ?? inputData['fast-lane'], { id: 'merge-lanes' })
+  .dountil(implementStep, async ({ inputData }) => inputData.passed === true || (inputData.attempts ?? 0) >= 3)
   .commit()
