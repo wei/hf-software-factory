@@ -1,6 +1,10 @@
 import { Mastra } from '@mastra/core'
 import { LibSQLStore } from '@mastra/libsql'
+import { triageAgent } from './stages/triage'
+import { issueToPr } from './workflows/issue-to-pr'
 
 export const mastra = new Mastra({
+  agents: { triageAgent },
+  workflows: { issueToPr },
   storage: new LibSQLStore({ id: 'factory', url: `file:${process.env.INIT_CWD ?? process.cwd()}/factory.db` }),
 })
